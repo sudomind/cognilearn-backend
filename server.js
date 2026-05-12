@@ -74,7 +74,10 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV,
   });
 });
-
+// ─── Root Route ───────────────────────────
+app.get('/', (req, res) => {
+  res.send('CogniLearn API Running');
+});
 // ─── API Routes ───────────────────────────
 app.use('/api/auth',       authRoutes);
 app.use('/api/documents',  documentRoutes);
@@ -88,13 +91,10 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ─── Start Server ─────────────────────────
-app.get('/', (req, res) => {
-  res.send('CogniLearn API Running');
-});
 app.listen(PORT, () => {
   console.log(`\n🚀 CogniLearn API running on http://localhost:${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🗄️  MongoDB: ${process.env.MONGODB_URI}\n`);
+  console.log(`🗄️ MongoDB Connected\n`);
 });
 
 module.exports = app;
