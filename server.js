@@ -88,6 +88,9 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ─── Start Server ─────────────────────────
+app.get('/', (req, res) => {
+  res.send('CogniLearn API Running');
+});
 app.listen(PORT, () => {
   console.log(`\n🚀 CogniLearn API running on http://localhost:${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
