@@ -258,39 +258,35 @@ async function generateQuiz(
     maxOutputTokens: 3500,
   });
 
-  const prompt = `
-You are an intelligent AI quiz generator.
+ const prompt = `
+You are an expert educational AI.
 
-Create a student-friendly multiple-choice quiz from this study material.
+Generate ${count} high-quality multiple-choice quiz questions from the provided study material.
 
 DOCUMENT CONTENT:
-${truncateContent(content, 15000)}
+${truncateContent(content)}
 
-IMPORTANT RULES:
-- Return ONLY valid JSON
-- Generate EXACTLY 10 MCQs
-- Include Easy, Medium, and Hard questions
-- Each question must contain:
-  - question
-  - options
-  - correctAnswer
-  - explanation
-  - difficulty
-- Make questions educational and exam-focused
+RULES:
+- Questions must test understanding, not memorization only
+- Include a mix of easy, medium, and hard
+- Keep explanations concise
+- Avoid duplicate questions
+
+RETURN ONLY VALID JSON.
 
 FORMAT:
 [
   {
-    "question": "Question here",
+    "question": "What is an Abstract Data Type?",
     "options": [
-      "A",
-      "B",
-      "C",
-      "D"
+      "Option A",
+      "Option B",
+      "Option C",
+      "Option D"
     ],
-    "correctAnswer": "A",
+    "correctAnswer": 1,
     "difficulty": "Easy",
-    "explanation": "Why this answer is correct"
+    "explanation": "Short explanation here"
   }
 ]
 `;
