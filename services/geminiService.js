@@ -1,8 +1,8 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// ======================================
-// GEMINI CONFIGURATION
-// ======================================
+// ===============================
+// Gemini Configuration
+// ===============================
 
 const genAI = new GoogleGenerativeAI(
   process.env.GEMINI_API_KEY
@@ -10,9 +10,9 @@ const genAI = new GoogleGenerativeAI(
 
 const MODEL_NAME = 'gemini-2.5-flash';
 
-// ======================================
-// MODEL HELPER
-// ======================================
+// ===============================
+// Helpers
+// ===============================
 
 function getModel(config = {}) {
   return genAI.getGenerativeModel({
@@ -20,33 +20,102 @@ function getModel(config = {}) {
 
     generationConfig: {
       temperature:
-        config.temperature || 0.7,
+        config.temperature || 0.5,
 
       maxOutputTokens:
-        config.maxOutputTokens || 2048,
+        config.maxOutputTokens ||
+        2048,
     },
   });
 }
-
-// ======================================
-// CONTENT LIMITER
-// ======================================
 
 function truncateContent(
   content,
   maxLength = 25000
 ) {
-
   if (!content) return '';
 
-  return content.length > maxLength
-    ? content.substring(0, maxLength)
+  return content.length >
+    maxLength
+    ? content.substring(
+        0,
+        maxLength
+      )
     : content;
 }
 
-// ======================================
+// ===============================
+// SAFE JSON PARSER
+// ===============================
+
+function safeJsonParse(text) {
+
+  try {
+
+    const cleaned = text
+
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    const arrayStart =
+      cleaned.indexOf('[');
+
+    const arrayEnd =
+      cleaned.lastIndexOf(']') + 1;
+
+    const objectStart =
+      cleaned.indexOf('{');
+
+    const objectEnd =
+      cleaned.lastIndexOf('}') + 1;
+
+    let pureJson = cleaned;
+
+    if (
+      arrayStart !== -1 &&
+      arrayEnd !== -1
+    ) {
+
+      pureJson = cleaned.slice(
+        arrayStart,
+        arrayEnd
+      );
+
+    } else if (
+      objectStart !== -1 &&
+      objectEnd !== -1
+    ) {
+
+      pureJson = cleaned.slice(
+        objectStart,
+        objectEnd
+      );
+    }
+
+    return JSON.parse(
+      pureJson
+    );
+
+  } catch (err) {
+
+    console.error(
+      'JSON Parse Error:',
+      err
+    );
+
+    console.log(
+      'RAW GEMINI RESPONSE:',
+      text
+    );
+
+    return null;
+  }
+}
+
+// ===============================
 // SUMMARY GENERATION
-// ======================================
+// ===============================
 
 async function generateSummary(
   content,
@@ -59,9 +128,9 @@ async function generateSummary(
   });
 
   const prompt = `
-You are an elite AI study assistant helping university students prepare smarter and faster.
+You are an elite AI study assistant helping university students revise for exams.
 
-Analyze the following study material and create a HIGH-QUALITY educational summary.
+Analyze the study material carefully and create a PROFESSIONAL educational summary.
 
 DOCUMENT TITLE:
 "${documentName}"
@@ -69,55 +138,41 @@ DOCUMENT TITLE:
 DOCUMENT CONTENT:
 ${truncateContent(content)}
 
-IMPORTANT RULES:
+INSTRUCTIONS:
 - Use markdown formatting
 - Use headings and subheadings
 - Use bullet points
 - Highlight important concepts in **bold**
-- Explain difficult concepts simply
-- Focus on exam-relevant topics
-- Avoid generic introductions
-- Make notes visually clean
-- Include revision-friendly points
-- Include formulas/theories if present
-- Keep output practical and educational
+- Explain concepts in simple language
+- Focus on exam-important concepts
+- Avoid unnecessary introductions
+- Keep output visually clean
+- Make revision easier for students
 
-OUTPUT FORMAT:
+FORMAT:
 
 # 📘 Overview
 
-Briefly explain what this document is about.
+# 🧠 Important Concepts
 
-# 🧠 Core Concepts
+# 📌 Key Definitions
 
-Explain major concepts clearly.
-
-# 📌 Important Definitions
-
-List important terms and meanings.
-
-# ⚡ Key Exam Points
-
-Mention formulas, principles, theories, or concepts likely to appear in exams.
+# ⚡ Important Exam Points
 
 # 📝 Quick Revision Notes
-
-Provide short revision-friendly notes.
-
-# 🎯 Final Takeaway
-
-Summarize the most important learning outcome.
 `;
 
   const result =
-    await model.generateContent(prompt);
+    await model.generateContent(
+      prompt
+    );
 
   return result.response.text();
 }
 
-// ======================================
+// ===============================
 // CONCEPT EXPLAINER
-// ======================================
+// ===============================
 
 async function explainConcept(
   concept,
@@ -125,93 +180,81 @@ async function explainConcept(
 ) {
 
   const model = getModel({
-    temperature: 0.8,
-    maxOutputTokens: 1500,
+    temperature: 0.4,
+    maxOutputTokens: 1800,
   });
 
   const prompt = `
-You are a smart, fun, modern AI tutor helping students understand concepts quickly.
+You are a fun and intelligent AI tutor helping university students.
 
-TOPIC:
-${concept}
+Explain the following concept in a SHORT, FUN, and EASY-TO-UNDERSTAND way.
+
+CONCEPT:
+"${concept}"
 
 DOCUMENT CONTENT:
-${truncateContent(content, 12000)}
+${truncateContent(content, 15000)}
 
-VERY IMPORTANT RULES:
-- Keep explanation SHORT and EASY
-- Explain in student-friendly language
-- Avoid boring textbook tone
-- Use fun analogies and real-life examples
-- Use emojis naturally
-- Add memory tricks if useful
-- Focus on conceptual understanding
-- Make it exam-friendly
+INSTRUCTIONS:
+- Keep explanation concise
+- Use simple language
 - Use markdown formatting
-- Keep things visually clean
-- If suitable, generate mini diagrams or flowcharts
+- Use emojis where useful
+- Add a real-world analogy
+- Add a tiny diagram using text if possible
+- Highlight important terms in **bold**
+- Avoid long paragraphs
+- Focus on understanding quickly
 
-OUTPUT FORMAT:
+FORMAT:
 
-# 🚀 What is it?
+# 🚀 Concept
 
-Explain in 3-5 simple lines.
+# 🧠 Simple Explanation
 
-# 😎 Real-Life Example
+# 🎯 Real-Life Analogy
 
-Give one relatable example.
+# 📌 Important Points
 
-# 🧠 Memory Trick
-
-Help students remember it easily.
-
-# 📌 Exam Tip
-
-Mention what students should write in exams.
-
-# 📊 Mini Diagram
-
-Generate a tiny text-based diagram if possible.
-
-Example:
-Input -> Process -> Output
+# 🔥 Tiny Diagram
 `;
 
   const result =
-    await model.generateContent(prompt);
+    await model.generateContent(
+      prompt
+    );
 
   return result.response.text();
 }
 
-// ======================================
+// ===============================
 // FLASHCARD GENERATION
-// ======================================
+// ===============================
 
 async function generateFlashcards(
   content
 ) {
 
   const model = getModel({
-    temperature: 0.5,
-    maxOutputTokens: 3000,
+    temperature: 0.4,
+    maxOutputTokens: 2500,
   });
 
   const prompt = `
-You are an AI flashcard generator for students.
+You are an educational AI.
 
-Generate highly useful educational flashcards from this study material.
+Generate 10 high-quality flashcards from the study material.
 
 DOCUMENT CONTENT:
 ${truncateContent(content, 15000)}
 
-IMPORTANT RULES:
+STRICT RULES:
 - Return ONLY valid JSON
-- Generate EXACTLY 10 flashcards
-- Focus on important concepts
+- No markdown
+- No explanations outside JSON
 - Keep answers concise
-- Make cards revision-friendly
-- Prioritize exam-relevant topics
-- Questions should be clear and direct
+- Focus on important concepts
+- Use beginner-friendly language
 
 FORMAT:
 [
@@ -223,56 +266,52 @@ FORMAT:
 `;
 
   const result =
-    await model.generateContent(prompt);
+    await model.generateContent(
+      prompt
+    );
 
   const text =
     result.response.text();
 
-  try {
+  const parsed =
+    safeJsonParse(text);
 
-    return JSON.parse(
-      text.replace(/```json|```/g, '')
-    );
-
-  } catch (err) {
-
-    console.error(
-      'Flashcard Parse Error:',
-      err
-    );
-
-    return [];
-  }
+  return Array.isArray(parsed)
+    ? parsed
+    : [];
 }
 
-// ======================================
+// ===============================
 // QUIZ GENERATION
-// ======================================
+// ===============================
 
 async function generateQuiz(
   content
 ) {
 
   const model = getModel({
-    temperature: 0.6,
-    maxOutputTokens: 3500,
+    temperature: 0.4,
+    maxOutputTokens: 3000,
   });
 
- const prompt = `
+  const prompt = `
 You are an expert educational AI.
 
-Generate ${count} high-quality multiple-choice quiz questions from the provided study material.
+Generate 10 HIGH-QUALITY MCQ quiz questions from the study material.
 
 DOCUMENT CONTENT:
-${truncateContent(content)}
+${truncateContent(content, 15000)}
 
-RULES:
-- Questions must test understanding, not memorization only
-- Include a mix of easy, medium, and hard
-- Keep explanations concise
+STRICT RULES:
+- Return ONLY valid JSON
+- No markdown
+- No explanations outside JSON
+- Every question must have EXACTLY 4 options
+- correctAnswer must be NUMBER index (0-3)
+- Include difficulty
+- Include short explanation
 - Avoid duplicate questions
-
-RETURN ONLY VALID JSON.
+- Mix easy, medium, hard
 
 FORMAT:
 [
@@ -286,37 +325,30 @@ FORMAT:
     ],
     "correctAnswer": 1,
     "difficulty": "Easy",
-    "explanation": "Short explanation here"
+    "explanation": "Short explanation"
   }
 ]
 `;
 
   const result =
-    await model.generateContent(prompt);
+    await model.generateContent(
+      prompt
+    );
 
   const text =
     result.response.text();
 
-  try {
+  const parsed =
+    safeJsonParse(text);
 
-    return JSON.parse(
-      text.replace(/```json|```/g, '')
-    );
-
-  } catch (err) {
-
-    console.error(
-      'Quiz Parse Error:',
-      err
-    );
-
-    return [];
-  }
+  return Array.isArray(parsed)
+    ? parsed
+    : [];
 }
 
-// ======================================
+// ===============================
 // DOCUMENT CHAT
-// ======================================
+// ===============================
 
 async function chatWithDocument(
   question,
@@ -324,12 +356,12 @@ async function chatWithDocument(
 ) {
 
   const model = getModel({
-    temperature: 0.7,
+    temperature: 0.5,
     maxOutputTokens: 1800,
   });
 
   const prompt = `
-You are an intelligent AI tutor helping students learn from documents.
+You are an AI tutor helping students understand their study material.
 
 DOCUMENT CONTENT:
 ${truncateContent(content, 18000)}
@@ -337,37 +369,27 @@ ${truncateContent(content, 18000)}
 STUDENT QUESTION:
 ${question}
 
-VERY IMPORTANT RULES:
-- Answer conversationally
-- Be educational but natural
-- Avoid robotic tone
+INSTRUCTIONS:
+- Answer clearly
+- Be educational
 - Use markdown formatting
-- Use examples if useful
-- Stay grounded in the document
-- Explain difficult ideas simply
-- Use diagrams/flowcharts if relevant
-- Make responses student-friendly
-
-OUTPUT FORMAT:
-
-# 💬 Answer
-
-# 📌 Key Insight
-
-# 🎯 Exam Perspective
-
-# 📊 Diagram (if useful)
+- Use bullet points where useful
+- Explain concepts simply
+- Stay relevant to document
+- Add examples if useful
 `;
 
   const result =
-    await model.generateContent(prompt);
+    await model.generateContent(
+      prompt
+    );
 
   return result.response.text();
 }
 
-// ======================================
+// ===============================
 // EXPORTS
-// ======================================
+// ===============================
 
 module.exports = {
   generateSummary,
