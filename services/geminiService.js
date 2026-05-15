@@ -216,8 +216,8 @@ IMPORTANT RULES:
 FORMAT:
 [
   {
-    "question": "Question here",
-    "answer": "Answer here"
+    "front": "Question here",
+    "back": "Answer here"
   }
 ]
 `;
