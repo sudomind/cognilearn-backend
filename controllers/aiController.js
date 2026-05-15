@@ -28,8 +28,14 @@ const generateSummary = async (req, res, next) => {
 
     res.json({ success: true, summary });
   } catch (err) {
-    next(err);
-  }
+  console.error('SUMMARY ERROR:', err);
+
+  res.status(500).json({
+    success: false,
+    message: err.message,
+    stack: err.stack,
+  });
+}
 };
 
 
