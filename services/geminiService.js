@@ -45,25 +45,49 @@ function truncateContent(content, maxChars = 12000) {
 async function generateSummary(content, documentName) {
   const model = getModel({ temperature: 0.5, maxOutputTokens: 1024 });
 
-  const prompt = `You are an expert educational AI tutor specializing in creating clear, comprehensive summaries for students.
+  const prompt = You are an advanced AI study assistant helping university students prepare for exams.
 
-Document Title: "${documentName}"
+Analyze the following study material carefully and create a HIGH-QUALITY educational summary.
 
-Document Content:
+DOCUMENT TITLE:
+"${documentName}"
+
+DOCUMENT CONTENT:
 ${truncateContent(content)}
 
-Create a well-structured educational summary that covers:
-1. Main topic and purpose of the document
-2. Key concepts and definitions (highlight important terms with **bold**)
-3. Core arguments, findings, or principles
-4. Practical applications or takeaways
+IMPORTANT INSTRUCTIONS:
+- Use markdown formatting
+- Use proper headings and subheadings
+- Use bullet points
+- Highlight key concepts in **bold**
+- Explain technical concepts in simple language
+- Focus on exam-important concepts
+- Avoid generic introductions
+- Make the output visually clean and easy to study
+- Include concise explanations
+- Keep the summary detailed but readable
 
-Requirements:
-- Write in 4-5 clear paragraphs
-- Use **bold** for all important terms and concepts
-- Be concise yet comprehensive
-- Focus on what a student needs to understand and remember
-- Write at an educational level appropriate for the content`;
+OUTPUT FORMAT:
+
+# 📘 Overview
+
+Provide a short overview of the document.
+
+# 🧠 Important Concepts
+
+Explain the major concepts clearly.
+
+# 📌 Key Definitions
+
+List important definitions and terminology.
+
+# ⚡ Important Points for Exams
+
+Mention formulas, principles, key theories, or frequently asked concepts.
+
+# 📝 Quick Revision Notes
+
+Provide short revision-friendly notes students can quickly review before exams.
 
   const result = await model.generateContent(prompt);
   return result.response.text();
