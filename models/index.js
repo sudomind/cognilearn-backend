@@ -64,11 +64,36 @@ const Flashcard = mongoose.model('Flashcard', flashcardSchema);
 // ─────────────────────────────────────────────
 const questionSchema = new mongoose.Schema(
   {
-    question:    { type: String, required: true },
-    options:     [{ type: String, required: true }],
-    correct:     { type: Number, required: true, min: 0, max: 3 },
-    explanation: { type: String, default: '' },
+    question: {
+      type: String,
+      required: true,
+    },
+
+    options: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+
+    correctAnswer: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 3,
+    },
+
+    difficulty: {
+      type: String,
+      default: 'Medium',
+    },
+
+    explanation: {
+      type: String,
+      default: '',
+    },
   },
+
   { _id: false }
 );
 
